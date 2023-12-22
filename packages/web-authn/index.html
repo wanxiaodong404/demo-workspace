@@ -6,24 +6,22 @@
 	<title>WebAuthn</title>
 </head>
 <body>
-
-	
 	<script>
 		var currentUser = null;
-		const challenge = new ArrayBuffer(16);
+		const challenge = new Uint8Array([1,2,3,4,5,5,4,3,2,1,1,2,3,4,5,6]);
 		async function createOption(type = 0, options = {}) {
+			//type: 0 注册 1 登陆
 			let {
-				name = 'anthony@email.com',
+				name = document.getElementById('username').value,
 				id = ''
 			} = options
-			// 0 注册 1 登陆
 			if (type === 0) {
 				uid = new Uint8Array(name.split(''));
 				return {
 					"challenge": challenge, // 需要转换为ArrayBuffer
 					"rp": {  					  // 我的网站信息
 						"name": "My Website",
-						"id": "localhost"
+						"id": location.hostname
 					},
 					"user": {                     // 用户信息
 						"name": name,  				
@@ -43,18 +41,26 @@
 				};
 			}
 			// 登陆
-			id = await setId(id);
+			const clients = [];
+			if (name) {
+				const list = getClients();
+				list.forEach(async item => {
+					if (item.name === name) {
+						item.clients.forEach(_item => {
+							clients.push({
+								type: 'public-key',
+								id: setId(_item.id)
+							})
+						})
+					}
+				})
+			}
 			return {
 				// password: true
 				"challenge": challenge,  // Need to convert to ArrayBuffer
 				"timeout": 60000,
-				"rpId": "localhost",
-				"allowCredentials": [
-					{
-						"type": "public-key",
-						"id": id,   // Need to convert to ArrayBuffer
-					}
-				]
+				"rpId": location.hostname,
+				"allowCredentials": clients
 			}
 		}
 
@@ -65,20 +71,21 @@
 				publicKey: await createOption(0, {name})
 			})
 			.then((pwdCred) => {
+				// debugger
 				const list = JSON.parse(localStorage.getItem('list') || '[]');
 				const index = list.findIndex(item => item.name === name);
 				const data = {
-					id: getBufferString(pwdCred.rawId, true),
 					name,
 					clients: [
 						{
+							id: getBufferString(pwdCred.rawId, true),
 							clientDataJSON: JSON.parse(getBufferString(pwdCred.response.clientDataJSON)),
 							attestationObject: getBufferString(pwdCred.response.attestationObject, true)
 						}
 					]
 				};
 				if (index >= 0) {
-					list[index] = data
+					list[index].clients.push(data.clients[0]);
 				} else {
 					list.push(data);
 				}
@@ -87,15 +94,16 @@
 			});
 		}
 
-		async function getAuth(id) {
+		async function getAuth(name) {
+			name = name || document.getElementById('username').value;
 			navigator.credentials
 			.get({
-				publicKey: await createOption(1, {id})
+				publicKey: await createOption(1, {name})
 			}).then((res) => {
-				const list = getClients();
-				const data = list.find(item => item.id === id);
+				// debugger
+				const data = getClients().find(item => item.name === name) || {};
 				currentUser = data;
-				document.querySelector('#user').innerText = data.name;
+				document.querySelector('#user').innerText = data.name || 'unknow';
 			})
 		}
 
@@ -106,7 +114,7 @@
 			return base64str ? window.btoa(str) : str;
 		}
 
-		async function setId(base64str) {
+		function setId(base64str) {
 			base64str = window.atob(base64str)
 			const buffer = new Uint8Array(base64str.split('').map(item => {
 				return item.charCodeAt(0);
@@ -125,12 +133,13 @@
 
 			list.forEach(item => {
 				const dom = document.createElement('div');
-				const {name, id} = item;
+				dom.style = 'cursor: pointer;'
+				const {name} = item;
 				dom.innerHTML = `用户名: ${name}`;
-				dom.dataset['id'] = id;
+				dom.dataset['name'] = name;
 				temp.appendChild(dom);
 				dom.addEventListener('click', function () {
-					getAuth(id);
+					getAuth(name);
 				})
 			});
 			container.appendChild(temp);
@@ -154,14 +163,12 @@
 		</section>
 
 		<section>
-			当前登陆： <span id="user"></span>
+			当前登陆： <span id="user">unknow</span>
 		</section>
 
 		<section>
 			<p>已注册用户：</p>
-			<div id="list">
-
-			</div>
+			<div id="list"></div>
 		</section>
 	</main>
 </body>
