@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WebAuthn</title>
+</head>
+<body>
+
+	
+	<script>
+		var currentUser = null;
+		const challenge = new ArrayBuffer(16);
+		async function createOption(type = 0, options = {}) {
+			let {
+				name = 'anthony@email.com',
+				id = ''
+			} = options
+			// 0 注册 1 登陆
+			if (type === 0) {
+				uid = new Uint8Array(name.split(''));
+				return {
+					"challenge": challenge, // 需要转换为ArrayBuffer
+					"rp": {  					  // 我的网站信息
+						"name": "My Website",
+						"id": "localhost"
+					},
+					"user": {                     // 用户信息
+						"name": name,  				
+						"displayName": "Anthony",
+						"id": uid // 需要转换为ArrayBuffer
+					},
+					"pubKeyCredParams": [
+						{
+							"type": "public-key",
+							"alg": -7				  // 接受的算法
+						}
+					],
+					// "authenticatorSelection": {
+					// 	authenticatorAttachment: "platform",
+					// },
+					"timeout": 60000              // 以毫秒为单位
+				};
+			}
+			// 登陆
+			id = await setId(id);
+			return {
+				// password: true
+				"challenge": challenge,  // Need to convert to ArrayBuffer
+				"timeout": 60000,
+				"rpId": "localhost",
+				"allowCredentials": [
+					{
+						"type": "public-key",
+						"id": id,   // Need to convert to ArrayBuffer
+					}
+				]
+			}
+		}
+
+		async function createAuth() {
+			const name = document.getElementById('username').value;
+			navigator.credentials
+			.create({
+				publicKey: await createOption(0, {name})
+			})
+			.then((pwdCred) => {
+				const list = JSON.parse(localStorage.getItem('list') || '[]');
+				const index = list.findIndex(item => item.name === name);
+				const data = {
+					id: getBufferString(pwdCred.rawId, true),
+					name,
+					clients: [
+						{
+							clientDataJSON: JSON.parse(getBufferString(pwdCred.response.clientDataJSON)),
+							attestationObject: getBufferString(pwdCred.response.attestationObject, true)
+						}
+					]
+				};
+				if (index >= 0) {
+					list[index] = data
+				} else {
+					list.push(data);
+				}
+				localStorage.setItem('list', JSON.stringify(list));
+				renderList(list)
+			});
+		}
+
+		async function getAuth(id) {
+			navigator.credentials
+			.get({
+				publicKey: await createOption(1, {id})
+			}).then((res) => {
+				const list = getClients();
+				const data = list.find(item => item.id === id);
+				currentUser = data;
+				document.querySelector('#user').innerText = data.name;
+			})
+		}
+
+
+		function getBufferString(buffer, base64str = false) {
+			const array = new Uint8Array(buffer)
+			const str = String.fromCharCode(...array)
+			return base64str ? window.btoa(str) : str;
+		}
+
+		async function setId(base64str) {
+			base64str = window.atob(base64str)
+			const buffer = new Uint8Array(base64str.split('').map(item => {
+				return item.charCodeAt(0);
+			}));
+			return buffer;
+		}
+
+		function getClients () {
+			return JSON.parse(localStorage.getItem('list') || '[]')
+		}
+		function renderList(list) {
+			const container = document.querySelector('#list');
+			container.innerHTML = '';
+			const temp = document.createDocumentFragment();
+			list = list || getClients();
+
+			list.forEach(item => {
+				const dom = document.createElement('div');
+				const {name, id} = item;
+				dom.innerHTML = `用户名: ${name}`;
+				dom.dataset['id'] = id;
+				temp.appendChild(dom);
+				dom.addEventListener('click', function () {
+					getAuth(id);
+				})
+			});
+			container.appendChild(temp);
+		}
+		setTimeout(() => {
+			renderList();
+		}, 100)
+	</script>
+	<main>
+
+		<section>
+			<label>
+				<span>用户名：</span>
+				<input type="text" id="username">
+			</label>
+
+			<button onClick="createAuth()">注册</button>
+			<button onclick="getAuth()">登陆</button>
+			<button onclick="createAuth()">注册新设备</button>
+
+		</section>
+
+		<section>
+			当前登陆： <span id="user"></span>
+		</section>
+
+		<section>
+			<p>已注册用户：</p>
+			<div id="list">
+
+			</div>
+		</section>
+	</main>
+</body>
+</html>
