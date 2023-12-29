@@ -21,11 +21,11 @@
 					"challenge": challenge, // 需要转换为ArrayBuffer
 					"rp": {  					  // 我的网站信息
 						"name": "My Website",
-						"id": location.hostname
+						"id": location.host
 					},
 					"user": {                     // 用户信息
 						"name": name,  				
-						"displayName": "Anthony",
+						"displayName": name,
 						"id": uid // 需要转换为ArrayBuffer
 					},
 					"pubKeyCredParams": [
@@ -34,9 +34,6 @@
 							"alg": -7				  // 接受的算法
 						}
 					],
-					// "authenticatorSelection": {
-					// 	authenticatorAttachment: "platform",
-					// },
 					"timeout": 60000              // 以毫秒为单位
 				};
 			}

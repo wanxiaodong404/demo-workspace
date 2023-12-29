@@ -1,0 +1,16 @@
+{
+  "name": "demo-workspace",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+	"test": "echo \"Error: no test specified\" && exit 1",
+	"run-audio": "pnpm --filter audio-context start"
+  },
+  "main": "index.js",
+  "workspaces": {
+	"packages": ["packages/*"]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
