@@ -13,5 +13,5 @@ echo '拉取最新代码成功'
 # echo '正在拉取nodeJs服务代码'
 # echo '正在复制编译好的代码至服务目录下'
 rm -rf ../wanxiaodong-static/static/$serverName
-cp -R ./build/ ../wanxiaodong-static/static/$serverName
+cp -R ./ ../wanxiaodong-static/static/$serverName
 echo '复制成功=======>^-^'
