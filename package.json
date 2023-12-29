@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
 	"test": "echo \"Error: no test specified\" && exit 1",
-	"run-audio": "pnpm --filter audio-context start"
+	"run:audio": "pnpm --filter audio-context start"
   },
   "main": "index.js",
   "workspaces": {
