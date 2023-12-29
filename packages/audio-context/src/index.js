@@ -1,6 +1,7 @@
 ;(function(w,d){
     const container = d.querySelector('#demo');
     const playIcon = require('./assets/img/play.jpg')
+	const loadIcon = require('./assets/img/loading.png');
     class Music {
         constructor(dom) {
             this.root = typeof dom === 'string' ?  d.querySelector(dom): dom;
@@ -33,9 +34,11 @@
                 const that = this;
                 xhr.responseType = 'arraybuffer'
                 xhr.open('get',url)
+				const stop = this.loading();
                 xhr.onload = function() {
-                    that.ac.decodeAudioData(xhr.response, (buffer) => {
-                        that.loadAudio(buffer)
+					that.ac.decodeAudioData(xhr.response, (buffer) => {
+						stop();
+						that.loadAudio(buffer)
                     })
                 }
                 xhr.onerror = function(e) {
@@ -89,15 +92,53 @@
             requestAnimationFrame(update)
         }
         ready() {
-            const imgWidth = 194;
-            const left = (this.width - imgWidth) / 2;
-            const top = (this.height - imgWidth) / 2;
+			const size = 50;
+            const left = (this.width - size) / 2;
+            const top = (this.height - size) / 2;
             const img = new Image();
             img.src = playIcon;
-            img.onload = () => {
-                this.ctx.drawImage(img, 0, 0, imgWidth, imgWidth, left, top, 50, 50)
+            img.onload = (res) => {
+				const {naturalHeight, naturalWidth} = res.currentTarget;
+                this.ctx.drawImage(img, 0, 0, naturalWidth, naturalHeight, left, top, size, size)
             }
         }
+		loading() {
+			const img = new Image();
+			const size = 50;
+			let imgWidth, imgHeight, left, top;
+            img.src = loadIcon;
+			let loading = false;
+            img.onload = (res) => {
+				loading = true;
+				const {naturalHeight, naturalWidth} = res.currentTarget;
+				imgWidth = naturalWidth
+				imgHeight = naturalHeight
+				left = (this.width - size) / 2;
+            	top = (this.height - size) / 2;
+				update();
+            };
+			let state = null;
+			const update = () => {
+				const edg = 0.1;
+				this.ctx.clearRect(-size, -size, this.width, this.height);
+				if (!state) {
+					this.ctx.save();
+					state = 1;
+					this.ctx.translate(this.width / 2, this.height / 2);
+				}
+				this.ctx.rotate(edg)
+                this.ctx.drawImage(img, 0, 0, imgWidth, imgHeight, -size/2, -size/2, size, size);
+				if (loading) {
+					requestAnimationFrame(update);
+				} else {
+					// 复原角度
+					this.ctx.restore()
+				}
+			}
+			return () => {
+				loading = false;
+			};
+		}
     }
     const demo = w.test = new Music(container)
     const audioList = [

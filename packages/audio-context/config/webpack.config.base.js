@@ -7,6 +7,7 @@ module.exports =  {
     entry: './index.js',
     output: {
         path: path.resolve(__dirname, '../dist'),
+		hashFunction: 'sha512',
         filename: 'index.js'
     },
     module: {
