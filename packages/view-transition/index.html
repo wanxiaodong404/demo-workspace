@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>view transition api</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+		}
+
+		.container {
+			width: 100%;
+			height: 100vh;
+			view-transition-name: container;
+		}
+		.dark {
+			/* background: rgba(0,0,0,1); */
+			color-scheme: dark;
+		}
+
+		::view-transition(root) {
+			z-index: 1000;
+		}
+		/* ::view-transition-old(root),::view-transition-new(root) {
+			animation-duration: 1s;
+		}	 */
+		/* ::view-transition-old(root) {
+			animation: clip .5s ease-out reverse;
+		}  */
+		::view-transition-old(root) {
+			animation: none;
+		} 
+		::view-transition-new(root) {
+			mix-blend-mode: normal;
+			animation: clip .5s ease-in forwards;
+		}
+		.dark::view-transition-old(root) {
+			animation: clip .5s ease-out reverse;
+			z-index: 100;
+		}
+		.dark::view-transition-new(root) {
+			animation: none;
+		}
+		@keyframes clip {
+			from {
+				clip-path: circle(0px at var(--x) var(--y));
+			}
+			to {
+				clip-path: circle(var(--radius) at var(--x) var(--y));
+			}
+		}
+		.dialog {
+			view-transition-name: dialog;
+		}
+		.dialog {
+			display: none;
+			width: 500px;
+			height: 50vh;
+			position: fixed;
+			background-color: #efefef;
+			border: 1px solid #eee;
+			border-radius: 5px;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+		}
+
+		::view-transition-new(dialog) {
+			animation-duration: 1s;
+		}
+		::view-transition-old(dialog) {
+			/* animation-duration: 1s; */
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<button id="button">切换主题模式</button>
+		<button id="dialog-button">弹窗</button>
+
+		<div class="dialog">
+			<button id="dialog-close-button">关闭</button>
+		</div>
+	</div>
+
+
+	<script>
+		// const container = document.querySelector('.container')
+		const container = document.documentElement
+		const radius = Math.sqrt(Math.pow(window.innerHeight, 2) + Math.pow(window.innerWidth, 2))
+		document.querySelector('#button').addEventListener('click', function(event) {
+			const {clientX, clientY} = event
+			const isDark = container.classList.contains('dark');
+			container.style.setProperty('--x', clientX + 'px')
+			container.style.setProperty('--y', clientY + 'px')
+			container.style.setProperty('--radius', radius + 'px')
+			const instance = document.startViewTransition((params) => {
+				container.classList.toggle('dark')
+			})
+		})
+
+
+
+		const dialogButton = document.querySelector('#dialog-button');
+		const dialogCloseButton = document.querySelector('#dialog-close-button')
+		const dialog = document.querySelector('.dialog');
+		// 关闭
+		dialogCloseButton.addEventListener('click', () => {
+			dialog.style.setProperty('view-transition-name', 'dialog')
+			document.startViewTransition(() => {
+				dialog.style.setProperty('view-transition-name', '')
+				dialogButton.style.setProperty('view-transition-name', 'dialog')
+				dialog.style.display = 'none'
+			})
+		})
+		// 打开
+		dialogButton.addEventListener('click', function(e) {
+			e.target.style.setProperty('view-transition-name', 'dialog')
+			document.startViewTransition(() => {
+				e.target.style.setProperty('view-transition-name', '')
+				dialog.style.display= 'block'
+			})
+		})
+
+	</script>
+</body>
+</html>
