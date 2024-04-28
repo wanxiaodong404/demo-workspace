@@ -14,6 +14,7 @@
 			width: 100%;
 			height: 100vh;
 			view-transition-name: container;
+			padding: 100px;
 		}
 		.dark {
 			/* background: rgba(0,0,0,1); */
@@ -23,21 +24,15 @@
 		::view-transition(root) {
 			z-index: 1000;
 		}
-		/* ::view-transition-old(root),::view-transition-new(root) {
-			animation-duration: 1s;
-		}	 */
-		/* ::view-transition-old(root) {
-			animation: clip .5s ease-out reverse;
-		}  */
 		::view-transition-old(root) {
 			animation: none;
 		} 
 		::view-transition-new(root) {
 			mix-blend-mode: normal;
-			animation: clip .5s ease-in forwards;
+			animation: clip .25s ease-in forwards;
 		}
 		.dark::view-transition-old(root) {
-			animation: clip .5s ease-out reverse;
+			animation: clip .25s ease-out reverse;
 			z-index: 100;
 		}
 		.dark::view-transition-new(root) {
@@ -52,9 +47,6 @@
 			}
 		}
 		.dialog {
-			view-transition-name: dialog;
-		}
-		.dialog {
 			display: none;
 			width: 500px;
 			height: 50vh;
@@ -65,14 +57,37 @@
 			left: 50%;
 			top: 50%;
 			transform: translate(-50%, -50%);
+			z-index: 200;
+			view-transition-name: dialog;
 		}
 
 		::view-transition-new(dialog) {
-			animation-duration: 1s;
+			animation-duration: 0.2s;
 		}
 		::view-transition-old(dialog) {
 			/* animation-duration: 1s; */
 			display: none;
+		}
+
+		.image-entry {
+			display: block;
+			margin: 100px auto 0;
+			width: 300px;
+			height: auto;
+			cursor: pointer;
+		}
+
+		.image-view {
+			view-transition-name: image;
+		}
+
+		.image-page {
+			width: 100vw;
+			height: 100vh;
+			position: fixed;
+			inset: 0;
+			z-index: 100;
+			background: #efefef;
 		}
 	</style>
 </head>
@@ -81,8 +96,19 @@
 		<button id="button">切换主题模式</button>
 		<button id="dialog-button">弹窗</button>
 
+		<img class="image-entry" src="./assets/screenshot-20240426-175659.png" alt="">
+
 		<div class="dialog">
 			<button id="dialog-close-button">关闭</button>
+		</div>
+
+		<div class="image-page" style="display: none;">
+			<h1>title</h1>
+			<button id="image-close-button">关闭页面</button>
+			<p>Here is a 7-character poem in Chinese, wrapped with HTML tags to separate the lines:</p>
+			<img class="image-view" src="./assets/screenshot-20240426-175659.png" alt="">
+			<p>Here is a 7-character poem in Chinese, wrapped with HTML tags to separate the lines:</p>
+			<p>Translation: Under the bright moon Quiet boat on still water Warm and gentle breeze Gently stroking flowers' fragrance Birds singing in harmony Mountain and river, vast and serene</p>
 		</div>
 	</div>
 
@@ -122,6 +148,32 @@
 			document.startViewTransition(() => {
 				e.target.style.setProperty('view-transition-name', '')
 				dialog.style.display= 'block'
+			})
+		})
+
+
+		const imageEntry = document.querySelector('.image-entry')
+		const imageCloseButton = document.querySelector('#image-close-button')
+		const imageView = document .querySelector('.image-view')
+		const imagePage = document.querySelector('.image-page');
+
+		imageEntry.addEventListener('click', function(e) {
+			imageView.style.setProperty('view-transition-name', '')
+			e.target.style.setProperty('view-transition-name', 'image')
+			document.startViewTransition(() => {
+				e.target.style.setProperty('view-transition-name', '')
+				imageView.style.setProperty('view-transition-name', 'image')
+				imagePage.style.display='block'
+			})
+		})
+
+		imageCloseButton.addEventListener('click', function() {
+			imageEntry.style.setProperty('view-transition-name', '')
+			imageView.style.setProperty('view-transition-name', 'image')
+			document.startViewTransition(() => {
+				imageView.style.setProperty('view-transition-name', '')
+				imageEntry.style.setProperty('view-transition-name', 'image')
+				imagePage.style.display='none'
 			})
 		})
 
